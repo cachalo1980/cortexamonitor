@@ -1,47 +1,49 @@
 'use client';
 
 import { useProxmox } from '@/lib/hooks/useProxmox';
+import { useDocker } from '@/lib/hooks/useDocker';
 import { formatBytes, pct } from '@/lib/format';
 import ProxmoxPanel from '@/components/dashboard/proxmox-panel';
+import DockerPanel from '@/components/dashboard/docker-panel';
 import MiniBar from '@/components/dashboard/mini-bar';
 
 function SummaryCards() {
-  const { nodes, loading } = useProxmox(15000);
+  const { nodes, loading: pLoading } = useProxmox(15000);
+  const { containers, loading: dLoading } = useDocker(20000);
 
   const node = nodes[0];
-  const totalContainers = nodes.reduce((acc, n) => acc + n.containers.length, 0);
-  const runningContainers = nodes.reduce((acc, n) => acc + n.containers.filter(c => c.status === 'running').length, 0);
   const cpuPct = node ? Math.round(node.cpu * 100) : 0;
   const ramPct = node ? pct(node.mem, node.maxmem) : 0;
+  const runningContainers = containers.filter(c => c.state === 'running').length;
 
   const cards = [
     {
-      label: 'CONTENEDORES',
-      value: loading ? '--' : `${runningContainers}/${totalContainers}`,
-      sub: loading ? 'cargando...' : `${totalContainers - runningContainers} detenidos`,
+      label: 'NODOS ONLINE',
+      value: pLoading ? '--' : `${nodes.filter(n => n.status === 'online').length}/${nodes.length}`,
+      sub: pLoading ? 'cargando...' : 'proxmox cluster',
       color: 'var(--accent)',
-      bar: loading ? 0 : pct(runningContainers, totalContainers),
+      bar: pLoading ? 0 : pct(nodes.filter(n => n.status === 'online').length, nodes.length),
     },
     {
       label: 'CPU NODO',
-      value: loading ? '--' : `${cpuPct}%`,
-      sub: loading ? 'cargando...' : `${node?.maxcpu || 0} cores`,
+      value: pLoading ? '--' : `${cpuPct}%`,
+      sub: pLoading ? 'cargando...' : `${node?.maxcpu || 0} cores`,
       color: cpuPct > 85 ? 'var(--danger)' : cpuPct > 65 ? 'var(--warn)' : 'var(--accent2)',
       bar: cpuPct,
     },
     {
       label: 'RAM USADA',
-      value: loading ? '--' : `${ramPct}%`,
-      sub: loading ? 'cargando...' : `${formatBytes(node?.mem || 0)} / ${formatBytes(node?.maxmem || 0)}`,
+      value: pLoading ? '--' : `${ramPct}%`,
+      sub: pLoading ? 'cargando...' : `${formatBytes(node?.mem || 0)} / ${formatBytes(node?.maxmem || 0)}`,
       color: ramPct > 85 ? 'var(--danger)' : ramPct > 65 ? 'var(--warn)' : 'var(--accent)',
       bar: ramPct,
     },
     {
-      label: 'NODOS ONLINE',
-      value: loading ? '--' : `${nodes.filter(n => n.status === 'online').length}/${nodes.length}`,
-      sub: loading ? 'cargando...' : 'proxmox cluster',
-      color: 'var(--accent)',
-      bar: loading ? 0 : pct(nodes.filter(n => n.status === 'online').length, nodes.length),
+      label: 'DOCKER',
+      value: dLoading ? '--' : `${runningContainers}/${containers.length}`,
+      sub: dLoading ? 'cargando...' : `${containers.length - runningContainers} detenidos`,
+      color: 'var(--accent2)',
+      bar: dLoading ? 0 : pct(runningContainers, containers.length),
     },
   ];
 
@@ -97,32 +99,42 @@ export default function OverviewPage() {
           <ProxmoxPanel />
         </div>
 
-        {/* Placeholders Sprint 4+ */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {['CONTENEDORES DOCKER', 'SERVICIOS & TUNNELS', 'ALERTAS RECIENTES'].map(panel => (
-            <div key={panel} style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: '8px',
-              padding: '16px',
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-            }}>
-              <div style={{ color: 'var(--muted)', fontSize: '10px', letterSpacing: '1.5px', marginBottom: '12px', fontFamily: 'var(--font-mono)' }}>
-                {panel}
-              </div>
-              <div style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--muted)', fontSize: '11px', fontFamily: 'var(--font-mono)',
-                border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '6px',
-                minHeight: '60px',
-              }}>
-                {'>'} Sprint 4 — datos reales
-              </div>
-            </div>
-          ))}
+        {/* Docker panel */}
+        <div style={{
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: '8px',
+          padding: '16px',
+        }}>
+          <div style={{ color: 'var(--muted)', fontSize: '10px', letterSpacing: '1.5px', marginBottom: '16px', fontFamily: 'var(--font-mono)' }}>
+            CONTENEDORES DOCKER
+          </div>
+          <DockerPanel />
         </div>
+
+        {/* Placeholders Sprint 5+ */}
+        {['SERVICIOS & TUNNELS', 'ALERTAS RECIENTES'].map(panel => (
+          <div key={panel} style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '8px',
+            padding: '16px',
+            minHeight: '120px',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            <div style={{ color: 'var(--muted)', fontSize: '10px', letterSpacing: '1.5px', marginBottom: '12px', fontFamily: 'var(--font-mono)' }}>
+              {panel}
+            </div>
+            <div style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--muted)', fontSize: '11px', fontFamily: 'var(--font-mono)',
+              border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '6px',
+            }}>
+              {'>'} Sprint 5 — datos reales
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
