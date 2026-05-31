@@ -37,6 +37,11 @@ services:
       - PORT=4000
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - PROXMOX_HOST=${PROXMOX_HOST}
+      - PROXMOX_TOKEN_ID=${PROXMOX_TOKEN_ID}
+      - PROXMOX_TOKEN_SECRET=${PROXMOX_TOKEN_SECRET}
+      - PROXMOX_VERIFY_SSL=${PROXMOX_VERIFY_SSL}
     depends_on:
       postgres:
         condition: service_healthy
