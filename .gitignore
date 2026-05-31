@@ -10,3 +10,30 @@ build/
 *.db
 *.db-journal
 *.db-wal
+# Dependencias e instalaciones
+**/node_modules/
+**/.pnpm-store/
+**/.pnpm/
+
+# Builds y caché (Evita fugas de secrets en Next.js)
+**/.next/
+**/dist/
+**/build/
+**/.cache/
+
+# Docker y persistencia local
+**/pg_data/
+**/.docker-data/
+
+# Entornos y secretos (Crítico)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Logs y temporales
+*.log
+.DS_Store
+*.db
+*.db-journal
+*.db-wal
