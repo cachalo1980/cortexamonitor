@@ -24,3 +24,31 @@ enum Role {
   ADMIN
   VIEWER
 }
+
+model Alert {
+  id        String      @id @default(cuid())
+  type      AlertType
+  severity  Severity
+  title     String
+  message   String
+  source    String
+  resolved  Boolean     @default(false)
+  resolvedAt DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@map("alerts")
+}
+
+enum AlertType {
+  SERVICE_DOWN
+  TUNNEL_DOWN
+  CPU_HIGH
+  RAM_HIGH
+}
+
+enum Severity {
+  INFO
+  WARN
+  CRITICAL
+}
