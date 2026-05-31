@@ -122,7 +122,7 @@ export default function LoginPage() {
             <div style={{ color: 'var(--muted)', fontSize: '10px', marginBottom: '12px', letterSpacing: '1px' }}>
               SYSTEM BOOT LOG
             </div>
-            {bootLines.map((line, i) => (
+            {bootLines.filter(Boolean).map((line, i) => (
               <div key={i} style={{
                 color: line.includes('[OK]') ? 'var(--accent)'
                   : line.includes('[READY]') ? '#00b8d9'
