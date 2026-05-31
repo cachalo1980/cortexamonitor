@@ -37,6 +37,7 @@ model Alert {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
+  @@unique([type, source, resolved])
   @@map("alerts")
 }
 
