@@ -44,6 +44,10 @@ services:
       - PROXMOX_VERIFY_SSL=${PROXMOX_VERIFY_SSL}
       - DOCKER_HOST=${DOCKER_HOST}
       - DOCKER_PORT=${DOCKER_PORT}
+      - CF_API_TOKEN=${CF_API_TOKEN}
+      - CF_ACCOUNT_ID=${CF_ACCOUNT_ID}
+      - CF_TUNNEL_ID=${CF_TUNNEL_ID}
+      - CF_ZONE_ID=${CF_ZONE_ID}
     depends_on:
       postgres:
         condition: service_healthy
