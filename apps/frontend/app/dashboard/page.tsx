@@ -6,7 +6,7 @@ import { useCloudflare } from '@/lib/hooks/useCloudflare';
 import { useAlerts } from '@/lib/hooks/useAlerts';
 import { formatBytes, pct } from '@/lib/format';
 import ProxmoxPanel from '@/components/dashboard/proxmox-panel';
-import DockerPanel from '@/components/dashboard/docker-panel';
+import DockerSummary from '@/components/dashboard/docker-summary';
 import CloudflarePanel from '@/components/dashboard/cloudflare-panel';
 import AlertsPanel from '@/components/dashboard/alerts-panel';
 import MiniBar from '@/components/dashboard/mini-bar';
@@ -104,7 +104,7 @@ export default function OverviewPage() {
           <div style={{ color: 'var(--muted)', fontSize: '10px', letterSpacing: '1.5px', marginBottom: '16px', fontFamily: 'var(--font-mono)' }}>
             CONTENEDORES DOCKER
           </div>
-          <DockerPanel />
+          <DockerSummary />
         </div>
 
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
