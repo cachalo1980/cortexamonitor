@@ -4,6 +4,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ProxmoxModule } from './proxmox/proxmox.module';
+import { DockerModule } from './docker/docker.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ProxmoxModule } from './proxmox/proxmox.module';
     AuthModule,
     UsersModule,
     ProxmoxModule,
+    DockerModule,
   ],
 })
 export class AppModule {}
