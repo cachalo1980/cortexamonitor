@@ -52,23 +52,11 @@ export class AlertsService {
     message: string,
     severity: Severity,
   ) {
-    try {
-      await this.prisma.$executeRaw`
-        INSERT INTO alerts (id, type, severity, title, message, source, resolved, "createdAt", "updatedAt")
-        VALUES (gen_random_uuid()::text, ${type}::"AlertType", ${severity}::"Severity", ${title}, ${message}, ${source}, false, NOW(), NOW())
-        ON CONFLICT DO NOTHING
-      `;
-    } catch {
-      const existing = await this.prisma.alert.findFirst({
-        where: { type, source, resolved: false },
-      });
-      if (!existing) {
-        await this.prisma.alert.create({
-          data: { type, severity, title, message, source },
-        });
-      }
-    }
-    this.logger.warn(`Alerta activa: [${severity}] ${title}`);
+    await this.prisma.alert.upsert({
+      where: { type_source_resolved: { type, source, resolved: false } },
+      update: { updatedAt: new Date() },
+      create: { type, severity, title, message, source, resolved: false },
+    });
   }
 
   private async autoResolve(type: AlertType, source: string) {
