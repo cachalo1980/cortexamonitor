@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import AuthSessionProvider from '@/components/layout/session-provider';
 
 export const metadata: Metadata = {
   title: 'CortexaMonitor',
@@ -9,7 +10,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <AuthSessionProvider>{children}</AuthSessionProvider>
+      </body>
     </html>
   );
 }
