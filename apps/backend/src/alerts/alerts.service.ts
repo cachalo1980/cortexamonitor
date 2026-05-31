@@ -45,22 +45,30 @@ export class AlertsService {
     });
   }
 
-  private async createAlertIfNotExists(
+  private async raiseAlert(
     type: AlertType,
     source: string,
     title: string,
     message: string,
     severity: Severity,
   ) {
-    const existing = await this.prisma.alert.findFirst({
-      where: { type, source, resolved: false },
-    });
-    if (existing) return;
-
-    await this.prisma.alert.create({
-      data: { type, severity, title, message, source },
-    });
-    this.logger.warn(`Nueva alerta: [${severity}] ${title}`);
+    try {
+      await this.prisma.$executeRaw`
+        INSERT INTO alerts (id, type, severity, title, message, source, resolved, "createdAt", "updatedAt")
+        VALUES (gen_random_uuid()::text, ${type}::"AlertType", ${severity}::"Severity", ${title}, ${message}, ${source}, false, NOW(), NOW())
+        ON CONFLICT DO NOTHING
+      `;
+    } catch {
+      const existing = await this.prisma.alert.findFirst({
+        where: { type, source, resolved: false },
+      });
+      if (!existing) {
+        await this.prisma.alert.create({
+          data: { type, severity, title, message, source },
+        });
+      }
+    }
+    this.logger.warn(`Alerta activa: [${severity}] ${title}`);
   }
 
   private async autoResolve(type: AlertType, source: string) {
@@ -87,7 +95,7 @@ export class AlertsService {
         const ramPct = Math.round((node.mem / node.maxmem) * 100);
 
         if (cpuPct > 85) {
-          await this.createAlertIfNotExists(
+          await this.raiseAlert(
             AlertType.CPU_HIGH, `proxmox:${node.name}`,
             `CPU alta en ${node.name}`,
             `CPU al ${cpuPct}% (umbral: 85%)`,
@@ -98,7 +106,7 @@ export class AlertsService {
         }
 
         if (ramPct > 85) {
-          await this.createAlertIfNotExists(
+          await this.raiseAlert(
             AlertType.RAM_HIGH, `proxmox:${node.name}`,
             `RAM alta en ${node.name}`,
             `RAM al ${ramPct}% (umbral: 85%)`,
@@ -117,7 +125,7 @@ export class AlertsService {
     try {
       const tunnel = await this.cloudflareService.getTunnelStatus();
       if (tunnel.status !== 'healthy') {
-        await this.createAlertIfNotExists(
+        await this.raiseAlert(
           AlertType.TUNNEL_DOWN, `cloudflare:${tunnel.id}`,
           `Tunnel caído: ${tunnel.name}`,
           `Estado del tunnel: ${tunnel.status}`,
@@ -133,10 +141,10 @@ export class AlertsService {
 
       for (const check of checks) {
         if (check.status === 'down') {
-          await this.createAlertIfNotExists(
+          await this.raiseAlert(
             AlertType.SERVICE_DOWN, `service:${check.hostname}`,
             `Servicio caído: ${check.hostname}`,
-            `HTTP ${check.httpCode || 'timeout'} — servicio no responde`,
+            `HTTP ${check.httpCode || 'timeout'} — no responde`,
             Severity.CRITICAL,
           );
         } else {

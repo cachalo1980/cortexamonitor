@@ -3,16 +3,19 @@
 import { useProxmox } from '@/lib/hooks/useProxmox';
 import { useDocker } from '@/lib/hooks/useDocker';
 import { useCloudflare } from '@/lib/hooks/useCloudflare';
+import { useAlerts } from '@/lib/hooks/useAlerts';
 import { formatBytes, pct } from '@/lib/format';
 import ProxmoxPanel from '@/components/dashboard/proxmox-panel';
 import DockerPanel from '@/components/dashboard/docker-panel';
 import CloudflarePanel from '@/components/dashboard/cloudflare-panel';
+import AlertsPanel from '@/components/dashboard/alerts-panel';
 import MiniBar from '@/components/dashboard/mini-bar';
 
 function SummaryCards() {
   const { nodes, loading: pLoading } = useProxmox(15000);
   const { containers, loading: dLoading } = useDocker(20000);
   const { health, loading: cLoading } = useCloudflare(30000);
+  const { unresolved, loading: aLoading } = useAlerts(30000);
 
   const node = nodes[0];
   const cpuPct = node ? Math.round(node.cpu * 100) : 0;
@@ -43,11 +46,11 @@ function SummaryCards() {
       bar: dLoading ? 0 : pct(runningContainers, containers.length),
     },
     {
-      label: 'SERVICIOS UP',
-      value: cLoading ? '--' : `${upServices}/${health.length}`,
-      sub: cLoading ? 'cargando...' : `${health.length - upServices} con problemas`,
-      color: upServices === health.length ? 'var(--accent)' : 'var(--warn)',
-      bar: cLoading ? 0 : pct(upServices, health.length),
+      label: 'ALERTAS ACTIVAS',
+      value: aLoading ? '--' : `${unresolved.length}`,
+      sub: aLoading ? 'cargando...' : unresolved.length === 0 ? 'todo ok' : `${unresolved.filter(a => a.severity === 'CRITICAL').length} criticas`,
+      color: unresolved.length === 0 ? 'var(--accent)' : unresolved.some(a => a.severity === 'CRITICAL') ? 'var(--danger)' : 'var(--warn)',
+      bar: 0,
     },
   ];
 
@@ -111,21 +114,11 @@ export default function OverviewPage() {
           <CloudflarePanel />
         </div>
 
-        <div style={{
-          background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: '8px', padding: '16px', minHeight: '120px',
-          display: 'flex', flexDirection: 'column',
-        }}>
-          <div style={{ color: 'var(--muted)', fontSize: '10px', letterSpacing: '1.5px', marginBottom: '12px', fontFamily: 'var(--font-mono)' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+          <div style={{ color: 'var(--muted)', fontSize: '10px', letterSpacing: '1.5px', marginBottom: '16px', fontFamily: 'var(--font-mono)' }}>
             ALERTAS RECIENTES
           </div>
-          <div style={{
-            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--muted)', fontSize: '11px', fontFamily: 'var(--font-mono)',
-            border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '6px',
-          }}>
-            {'>'} Sprint 6 — alertas reales
-          </div>
+          <AlertsPanel />
         </div>
       </div>
     </div>
