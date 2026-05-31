@@ -2,6 +2,7 @@ FROM node:20-alpine
 RUN npm install -g pnpm
 WORKDIR /app
 COPY package.json pnpm-lock.yaml* ./
+RUN pnpm config set store-dir /app/.pnpm-store
 RUN pnpm install
 COPY . .
 EXPOSE 4000
