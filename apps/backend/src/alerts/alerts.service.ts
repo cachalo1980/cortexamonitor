@@ -32,16 +32,21 @@ export class AlertsService {
   }
 
   async resolveAlert(id: string) {
-    return this.prisma.alert.update({
-      where: { id },
-      data: { resolved: true, resolvedAt: new Date() },
+    const alert = await this.prisma.alert.findUnique({ where: { id } });
+    if (!alert) return null;
+    return this.prisma.$transaction(async (tx) => {
+      await tx.alert.deleteMany({ where: { type: alert.type, source: alert.source, resolved: true } });
+      return tx.alert.update({ where: { id }, data: { resolved: true, resolvedAt: new Date() } });
     });
   }
 
   async resolveAll() {
-    return this.prisma.alert.updateMany({
-      where: { resolved: false },
-      data: { resolved: true, resolvedAt: new Date() },
+    const unresolved = await this.prisma.alert.findMany({ where: { resolved: false } });
+    return this.prisma.$transaction(async (tx) => {
+      for (const alert of unresolved) {
+        await tx.alert.deleteMany({ where: { type: alert.type, source: alert.source, resolved: true } });
+      }
+      return tx.alert.updateMany({ where: { resolved: false }, data: { resolved: true, resolvedAt: new Date() } });
     });
   }
 
@@ -60,9 +65,11 @@ export class AlertsService {
   }
 
   private async autoResolve(type: AlertType, source: string) {
-    await this.prisma.alert.updateMany({
-      where: { type, source, resolved: false },
-      data: { resolved: true, resolvedAt: new Date() },
+    const active = await this.prisma.alert.findFirst({ where: { type, source, resolved: false } });
+    if (!active) return;
+    await this.prisma.$transaction(async (tx) => {
+      await tx.alert.deleteMany({ where: { type, source, resolved: true } });
+      await tx.alert.update({ where: { id: active.id }, data: { resolved: true, resolvedAt: new Date() } });
     });
   }
 
