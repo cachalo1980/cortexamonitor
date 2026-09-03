@@ -1,0 +1,10 @@
+# Override local: los puertos 3000 y 5432 del host ya los usan otros proyectos.
+# `!override` reemplaza la lista de ports del compose base en vez de sumarse a ella.
+# Solo cambia el puerto publicado en el host; dentro de la red interna nada cambia.
+services:
+  frontend:
+    ports: !override
+      - "3100:3000"
+  postgres:
+    ports: !override
+      - "5433:5432"
